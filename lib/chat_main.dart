@@ -36,6 +36,12 @@ class _ChatMainState extends State<ChatMain> {
 
   List<Message> message = [];
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    print("aaaaaaa${message.isEmpty.toString()}");
+  }
   Future<void> callAi(TextEditingController textC) async {
     await Gemini.instance.prompt(parts: [
       Part.text(textC.text.trim()),
@@ -84,39 +90,48 @@ class _ChatMainState extends State<ChatMain> {
       appBar: AppBar(title: Text('Chatbot'),),
       body: SingleChildScrollView(
         child: Container(
+          padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
           height: MediaQuery.of(context).size.height,
-          child: ListView.builder(
+          child: message.isEmpty ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Ask Me Anything....', style: TextStyle(
+                      color: Colors.black, fontSize: 25
+                  ),)
+                ],
+              )) : ListView.builder(
               itemCount: message.length,
               itemBuilder: (context , i){
-            return Column(
-              children: [
-                Text(message[i].question, style: TextStyle(
-                    color: Colors.black
-                ),),
-                Text(message[i].response, style: TextStyle(
-                  color: Colors.black
-                ),),
-
-              ],
-            );
+                return Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Bubble(
+                          child: Text(message[i].question, style: TextStyle(
+                              color: Colors.black
+                          ),textAlign: TextAlign.left,),
+                        ),],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          child: Bubble(
+                            child: Text(message[i].response, style: TextStyle(
+                                color: Colors.black
+                            ),textAlign: TextAlign.left,),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                );
           }),
         ),
-      )
-      // FutureBuilder(
-      //     future: callAi(),
-      //     builder: (context, snap){
-      //   if(snap.hasData){
-      //     return Column(
-      //       children: [
-      //         Text('data'),
-      //       ],
-      //     );
-      //   }
-      //   return Text('error');
-      // })
-        ,
+      ),
       bottomSheet: _buildInputBar(),
-      //bottomNavigationBar: _buildInputBar()
     ));
   }
 }
@@ -140,5 +155,23 @@ class Message extends Equatable {
   @override
   List<Object?> get props => [question, response];
 
+}
 
+class Bubble extends StatelessWidget {
+
+  const Bubble({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(8, 2, 8, 2),
+      margin: EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(.1),
+        borderRadius: BorderRadius.circular(10)
+      ),
+      child: child,
+    );
+  }
 }
