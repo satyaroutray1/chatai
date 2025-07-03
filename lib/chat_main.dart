@@ -44,8 +44,6 @@ class _ChatMainState extends State<ChatMain> {
       Part.text(textC.text.trim()),
     ]).then((value) {
       print(value?.output);
-      //print(ChatMessage(question: textC.text.trim(), response: value!.output.toString()));
-
 
       setState(() {
         final i = message.indexWhere((message) => message.question == textC.text && message.isLoading == true);
@@ -60,6 +58,10 @@ class _ChatMainState extends State<ChatMain> {
   }
 
   void callAiTextImage(TextEditingController textC) async{
+    setState(() {
+      message.add(ChatMessage(question: textC.text.trim(), isLoading: true));
+
+    });
     final bytes1 = await pickedFile?.readAsBytes();
 
     final result = await Gemini.instance.prompt(parts: [
@@ -68,11 +70,16 @@ class _ChatMainState extends State<ChatMain> {
         InlineData.fromUint8List(bytes1!)
       )
     ]);
-    message.add(ChatMessage(question: textC.text.trim(), response: result!.output.toString(), isLoading: false));
-    controller.clear();
 
     setState(() {
+      final i = message.indexWhere((message) => message.question == textC.text && message.isLoading == true);
+      if (i != -1) {
+        message[i].response = result?.output.toString();
+        message[i].isLoading = false;
+        pickedFile == null;
+      }
 
+      controller.clear();
     });
   }
 
@@ -100,7 +107,6 @@ class _ChatMainState extends State<ChatMain> {
                 
                 pickedFile != null ?
                 callAiTextImage(controller) : callAiText(controller);
-                pickedFile == null;
               }
             },
           )
