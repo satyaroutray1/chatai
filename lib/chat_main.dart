@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'chat_model.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'chat_widget.dart';
@@ -20,12 +19,10 @@ typedef OnPickImageCallback = void Function(
 
 class _ChatMainState extends State<ChatMain> {
 
-  final _chatController = InMemoryChatController();
   TextEditingController controller = TextEditingController();
 
   @override
   void dispose() {
-    _chatController.dispose();
     super.dispose();
   }
 
@@ -37,22 +34,32 @@ class _ChatMainState extends State<ChatMain> {
     super.initState();
   }
 
-  Future<void> callAiText(TextEditingController textC) async {
-    await Gemini.instance.prompt(parts: [
+  void callAiText(TextEditingController textC)  {
+    setState(() {
+      message.add(ChatMessage(question: textC.text.trim(), isLoading: true));
+
+    });
+
+    Gemini.instance.prompt(parts: [
       Part.text(textC.text.trim()),
     ]).then((value) {
       print(value?.output);
-      print(ChatMessage(question: textC.text.trim(), response: value!.output.toString()));
-      message.add(ChatMessage(question: textC.text.trim(), response: value.output.toString()));
-      controller.clear();
+      //print(ChatMessage(question: textC.text.trim(), response: value!.output.toString()));
+
 
       setState(() {
+        final i = message.indexWhere((message) => message.question == textC.text && message.isLoading == true);
+        if (i != -1) {
+          message[i].response = value?.output.toString();
+          message[i].isLoading = false;
+        }
 
+        controller.clear();
       });
     });
   }
 
-  callAiTextImage(TextEditingController textC) async{
+  void callAiTextImage(TextEditingController textC) async{
     final bytes1 = await pickedFile?.readAsBytes();
 
     final result = await Gemini.instance.prompt(parts: [
@@ -61,7 +68,7 @@ class _ChatMainState extends State<ChatMain> {
         InlineData.fromUint8List(bytes1!)
       )
     ]);
-    message.add(ChatMessage(question: textC.text.trim(), response: result!.output.toString()));
+    message.add(ChatMessage(question: textC.text.trim(), response: result!.output.toString(), isLoading: false));
     controller.clear();
 
     setState(() {
@@ -76,21 +83,24 @@ class _ChatMainState extends State<ChatMain> {
         children: [
           Expanded(
             child: TextField(
+
               controller: controller,
-              decoration: InputDecoration(hintText: 'Ask something...'),
-              style: TextStyle(color: Colors.black),
+              decoration: InputDecoration(hintText: 'Ask anything...'),
+              style: TextStyle(color: Colors.black,),
             ),
           ),
           IconButton(onPressed: (){
             _onImageButtonPressed(context: context,ImageSource.gallery, );
-          }, icon: Icon(Icons.image)),
+          }, icon: Icon(Icons.image_outlined)),
           IconButton(
             icon: Icon(Icons.send),
             onPressed: () {
+              FocusScope.of(context).requestFocus(FocusNode());
               if (controller.text.trim().isNotEmpty) {
-                //sendMessage(controller.text.trim());
-                //callAiText(controller);
-                callAiTextImage(controller);
+                
+                pickedFile != null ?
+                callAiTextImage(controller) : callAiText(controller);
+                pickedFile == null;
               }
             },
           )
@@ -123,7 +133,7 @@ class _ChatMainState extends State<ChatMain> {
 
   XFile? pickedFile;
   Future<void> _displayPickImageDialog(
-      BuildContext context//, bool isMulti, OnPickImageCallback onPick
+      BuildContext context
       ) async {
           try {
             pickedFile = await _picker.pickImage(
@@ -131,7 +141,6 @@ class _ChatMainState extends State<ChatMain> {
             );
             setState(() {
               _setImageFileListFromFile(pickedFile);
-              print(pickedFile?.name.toString());
             });
           } catch (e) {
             setState(() {
@@ -142,56 +151,87 @@ class _ChatMainState extends State<ChatMain> {
   
   @override
   Widget build(BuildContext context) {
-    return SafeArea(child: 
-    Scaffold(
-      appBar: AppBar(title: Text('Chatbot'),),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-          height: MediaQuery.of(context).size.height,
-          child:
-//          pickedFile == null ? Container(): Image.file(File(pickedFile!.path))
-          message.isEmpty ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Ask Me Anything....', style: TextStyle(
-                      color: Colors.black, fontSize: 25
-                  ),)
-                ],
-              )) : ListView.builder(
-              itemCount: message.length,
-              itemBuilder: (context , i){
-                return Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Bubble(
-                          child: Text(message[i].question, style: TextStyle(
-                              color: Colors.black
-                          ),textAlign: TextAlign.left,),
-                        ),],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Flexible(
-                          child: Bubble(
-                            child: Text(message[i].response, style: TextStyle(
-                                color: Colors.black
-                            ),textAlign: TextAlign.left,),
+    return SafeArea(
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                    colors: [Colors.greenAccent, Colors.white, ],
+                    center: Alignment.topCenter,
+                    radius: 1
+                ),
+              ),
+            ),
+            Scaffold(
+              backgroundColor: Colors.transparent,
+              appBar: AppBar(title: Text('ChatAI', style: TextStyle(
+                color: Colors.white
+              ),),
+                backgroundColor: Colors.transparent,),
+              body: SingleChildScrollView(
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(10, 0, 10, 150),
+                  height: MediaQuery.of(context).size.height,
+
+                  child: message.isEmpty ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Hello, How can I help you today?', style: TextStyle(
+                              color: Colors.black, fontSize: 25
+                          ),)
+                        ],
+                      )) : ListView.builder(
+                      itemCount: message.length,
+                      itemBuilder: (context , i){
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Column(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  pickedFile != null ?
+                                  Image.file(File(pickedFile!.path),height: 100, ) :Container(),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Bubble(
+                                        child: Text(message[i].question ?? '', style: TextStyle(
+                                            color: Colors.black
+                                        ),textAlign: TextAlign.left,),
+                                      ),],
+                                  ),
+                                ],
+                              ),
+
+                              message[i].isLoading ? Text('Thinking .......',
+                                style: TextStyle(color: Colors.black),
+                              textAlign: TextAlign.start,):Card(
+                                color: Colors.white,
+                                child: Container(padding: EdgeInsets.fromLTRB(10, 20, 10 ,0),
+                                  child: Row(
+                                    children: [Flexible(
+                                      child: Text(message[i].response ?? '', style: TextStyle(
+                                          color: Colors.black
+                                      ),textAlign: TextAlign.left,),
+                                    ),],
+                                  ),
+                                ),
+                              )
+                            ],
                           ),
-                        ),
-                      ],
-                    )
-                  ],
-                );
-          }),
-        ),
-      ),
-      bottomSheet: _buildInputBar(),
-    ));
+                        );
+                      }),
+                ),
+              ),
+              bottomSheet: _buildInputBar(),
+            )
+          ],
+        )
+
+    );
   }
 }
 
