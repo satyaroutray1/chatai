@@ -6,6 +6,7 @@ import 'chat_model.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'chat_widget.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 
 class ChatMain extends StatefulWidget {
   const ChatMain({super.key});
@@ -36,7 +37,7 @@ class _ChatMainState extends State<ChatMain> {
     super.initState();
   }
 
-  Future<void> callAi(TextEditingController textC) async {
+  Future<void> callAiText(TextEditingController textC) async {
     await Gemini.instance.prompt(parts: [
       Part.text(textC.text.trim()),
     ]).then((value) {
@@ -48,6 +49,23 @@ class _ChatMainState extends State<ChatMain> {
       setState(() {
 
       });
+    });
+  }
+
+  callAiTextImage(TextEditingController textC) async{
+    final bytes1 = await pickedFile?.readAsBytes();
+
+    final result = await Gemini.instance.prompt(parts: [
+      Part.text("What is in this image?"),
+      Part.inline(
+        InlineData.fromUint8List(bytes1!)
+      )
+    ]);
+    message.add(ChatMessage(question: textC.text.trim(), response: result!.output.toString()));
+    controller.clear();
+
+    setState(() {
+
     });
   }
 
@@ -71,7 +89,8 @@ class _ChatMainState extends State<ChatMain> {
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
                 //sendMessage(controller.text.trim());
-                callAi(controller);
+                //callAiText(controller);
+                callAiTextImage(controller);
               }
             },
           )
@@ -87,63 +106,7 @@ class _ChatMainState extends State<ChatMain> {
   }
 
   dynamic _pickImageError;
-  bool isVideo = false;
-
-
   final ImagePicker _picker = ImagePicker();
-  final TextEditingController maxWidthController = TextEditingController();
-  final TextEditingController maxHeightController = TextEditingController();
-  final TextEditingController qualityController = TextEditingController();
-  final TextEditingController limitController = TextEditingController();
-/*
-  Future<void> _onImageButtonPressed(
-      ImageSource source, {
-        required BuildContext context,
-        bool isMultiImage = false,
-        bool isMedia = false,
-      }) async {
-
-    if (context.mounted) {
-      await _displayPickImageDialog(context, false, (double? maxWidth,
-          double? maxHeight, int? quality, int? limit) async {
-        try {
-          final XFile? pickedFile = await _picker.pickImage(
-            source: source,
-            // maxWidth: maxWidth,
-            // maxHeight: maxHeight,
-            // imageQuality: quality,
-          );
-          setState(() {
-            _setImageFileListFromFile(pickedFile);
-            print(pickedFile?.name.toString());
-          });
-        } catch (e) {
-          setState(() {
-            _pickImageError = e;
-          });
-        }
-      });
-      //   await _displayPickImageDialog(context, false) async {
-      //       try {
-      //         final XFile? pickedFile = await _picker.pickImage(
-      //           source: source,
-      //           // maxWidth: maxWidth,
-      //           // maxHeight: maxHeight,
-      //           // imageQuality: quality,
-      //         );
-      //         setState(() {
-      //           _setImageFileListFromFile(pickedFile);
-      //           print(pickedFile?.name.toString());
-      //         });
-      //       } catch (e) {
-      //         setState(() {
-      //           _pickImageError = e;
-      //         });
-      //       }
-      // }
-    }}
-
- */
 
   Future<void> _onImageButtonPressed(
       ImageSource source, {
@@ -186,11 +149,9 @@ class _ChatMainState extends State<ChatMain> {
         child: Container(
           padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
           height: MediaQuery.of(context).size.height,
-          child: Container(
-            child: pickedFile == null ? Text('ffffffffff'):
-            Image.file(File(pickedFile!.path)),
-          )//Image.asset(name)
-          /*message.isEmpty ? Center(
+          child:
+//          pickedFile == null ? Container(): Image.file(File(pickedFile!.path))
+          message.isEmpty ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -227,7 +188,6 @@ class _ChatMainState extends State<ChatMain> {
                   ],
                 );
           }),
-          */
         ),
       ),
       bottomSheet: _buildInputBar(),
