@@ -1,10 +1,9 @@
-import 'dart:io';
-import 'dart:typed_data';
+
+import 'package:all_ui_projects/widgets/chat_widget.dart';
 import 'package:flutter/material.dart';
-import 'chat_model.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
-import 'chat_widget.dart';
 import 'package:image_picker/image_picker.dart';
+import 'models/chat_model.dart';
+import 'package:flutter_gemini/flutter_gemini.dart';
 
 class ChatMain extends StatefulWidget {
   const ChatMain({super.key});
