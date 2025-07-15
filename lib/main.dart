@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
-
 import 'chat_main.dart';
 
+String apiKey = 'API_KEY';
+
 void main() {
-  Gemini.init(apiKey: 'AIzaSyBJjpbnVJxjWDg8maAFhGyeqz', enableDebugging: true);
+  Gemini.init(apiKey: apiKey, enableDebugging: true);
   runApp(const MyApp());
 }
 
