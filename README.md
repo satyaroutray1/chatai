@@ -8,7 +8,7 @@ A simple yet powerful Flutter app that lets you interact with Google Gemini AI u
   <img src="assets/screenshots/ss2.jpg" width="250" alt="screenshot2"/>
 </p>
 
-[![Watch the demo](assets/screenshots/ss1.jpg)](https://youtube.com/shorts/TTInchpTxBc?si=t6bEU3Mp-li5TvNZ)
+![Watch the demo](https://youtube.com/shorts/TTInchpTxBc?si=t6bEU3Mp-li5TvNZ)
 
 ---
 
